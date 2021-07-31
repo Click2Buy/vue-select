@@ -1,8 +1,8 @@
 <template>
-  <div class="py-4">
-    <div class="grid grid-cols-10 gap-6">
+  <div class="pt-4" style="padding-bottom: 10rem;">
+    <div class="row">
       <!-- Props -->
-      <div class="col-span-2">
+      <div class="col-12 col-md-3">
         <h4>Properties</h4>
         <div class="form-group">
           <div class="form-check form-switch">
@@ -65,29 +65,30 @@
         </div>
       </div>
 
-      <!-- Single -->
-      <div class="col-span-4">
+      <div class="col-12 col-md-9">
+        <!-- Single -->
         <h4>Single</h4>
 
-        <div class="form-group">
-          <label>Favorite pokémon</label>
-          <!-- Actual component -->
-          <vue-select
-            v-model="value"
-            :options="options"
-            :always-open="alwaysOpen"
-            :multiple="false"
-            :filterable="filterable"
-            filter-field="name"
-            :checkboxes-style="checkboxesStyle"
-            :close-on-select="closeOnSelect"
-            :pagination="pagination"
-            :page-size="parseInt(pageSize)">
-            <template v-slot:option="{ option }">
-              <img :src="option.iconUrl" class="pokemon-icon">
-              {{ option.name }}
-            </template>
-          </vue-select>
+        <div class="form-group row">
+          <label class="col-12">Favorite pokémon</label>
+          <div class="col-12 col-md-6">
+            <vue-select
+              v-model="value"
+              :options="options"
+              :always-open="alwaysOpen"
+              :multiple="false"
+              :filterable="filterable"
+              filter-field="name"
+              :checkboxes-style="checkboxesStyle"
+              :close-on-select="closeOnSelect"
+              :pagination="pagination"
+              :page-size="parseInt(pageSize)">
+              <template v-slot:option="{ option }">
+                <img :src="option.iconUrl" class="pokemon-icon">
+                {{ option.name }}
+              </template>
+            </vue-select>
+          </div>
         </div>
 
         <div class="form-group">
@@ -96,49 +97,89 @@
             <code>{{ JSON.stringify(value) }}</code>
           </div>
         </div>
-      </div>
 
-      <!-- Multiple -->
-      <div class="col-span-4">
+        <hr>
+
+        <!-- Multiple -->
         <h4>Multiple</h4>
 
-        <div class="form-group">
-          <label>Pokémon team</label>
-          <!-- Actual component -->
-          <vue-select
-            v-model="valueMultiple"
-            :options="options"
-            :always-open="alwaysOpen"
-            :multiple="true"
-            :filterable="filterable"
-            filter-field="name"
-            :checkboxes-style="checkboxesStyle"
-            :close-on-select="closeOnSelect"
-            :pagination="pagination"
-            :page-size="parseInt(pageSize)"
-            :displaySelectedOptionsFirst="displaySelectedOptionsFirst"
-            :select-all-option="selectAllOption"
-            :clear-button="clearButton"
-            :display-tags="displayTags">
-            <template v-slot:option="{ option }">
-              <img :src="option.iconUrl" class="pokemon-icon">
-              {{ option.name }}
-            </template>
-            <!--<template v-slot:placeholder="{ selectedOption }">
-              <template v-if="!selectedOption">
-                Select an option pliz
+        <div class="form-group row">
+          <label class="col-12">Pokémon team</label>
+          <div class="col-12 col-md-6">
+            <vue-select
+              v-model="valueMultiple"
+              :options="options"
+              :always-open="alwaysOpen"
+              :multiple="true"
+              :filterable="filterable"
+              filter-field="name"
+              :checkboxes-style="checkboxesStyle"
+              :close-on-select="closeOnSelect"
+              :pagination="pagination"
+              :page-size="parseInt(pageSize)"
+              :displaySelectedOptionsFirst="displaySelectedOptionsFirst"
+              :select-all-option="selectAllOption"
+              :clear-button="clearButton"
+              :display-tags="displayTags">
+              <template v-slot:option="{ option }">
+                <img :src="option.iconUrl" class="pokemon-icon">
+                {{ option.name }}
               </template>
-              <template v-else>
-                Selected: {{ selectedOption.name }}
-              </template>
-            </template>-->
-          </vue-select>
+              <!--<template v-slot:placeholder="{ selectedOption }">
+                <template v-if="!selectedOption">
+                  Select an option pliz
+                </template>
+                <template v-else>
+                  Selected: {{ selectedOption.name }}
+                </template>
+              </template>-->
+            </vue-select>
+          </div>
         </div>
 
         <div class="form-group">
           <samp>v-model</samp>
           <div>
             <code>{{ JSON.stringify(valueMultiple) }}</code>
+          </div>
+        </div>
+
+        <hr>
+
+        <!-- Async -->
+        <h4>Async</h4>
+
+        <div class="form-group row">
+          <label class="col-12">Pokémon team</label>
+          <div class="col-12 col-md-6">
+            <vue-select
+              v-model="valueAsync"
+              async
+              :load-options="loadOptions"
+              :always-open="alwaysOpen"
+              :multiple="true"
+              :filterable="filterable"
+              filter-field="name"
+              :checkboxes-style="checkboxesStyle"
+              :close-on-select="closeOnSelect"
+              :pagination="pagination"
+              :page-size="parseInt(pageSize)"
+              :displaySelectedOptionsFirst="displaySelectedOptionsFirst"
+              :select-all-option="selectAllOption"
+              :clear-button="clearButton"
+              :display-tags="displayTags">
+              <template v-slot:option="{ option }">
+                <img :src="option.iconUrl" class="pokemon-icon">
+                {{ option.name }}
+              </template>
+            </vue-select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <samp>v-model</samp>
+          <div>
+            <code>{{ JSON.stringify(valueAsync) }}</code>
           </div>
         </div>
       </div>
@@ -162,13 +203,23 @@ export default {
       { value: 9, name: 'Blastoise', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/009.png' },
       { value: 10, name: 'Caterpie', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/010.png' },
       { value: 11, name: 'Metapod', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/011.png' },
-      { value: 12, name: 'Butterfree', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/012.png' }
+      { value: 12, name: 'Butterfree', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/012.png' },
+      { value: 13, name: 'Weedle', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/013.png' },
+      { value: 14, name: 'Kakuna', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/014.png' },
+      { value: 15, name: 'Beedrill', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/015.png' }
     ])
+
+    const loadOptions = async function(query) {
+      await new Promise(r => setTimeout(r, 500))
+      return !query ? options : options.filter(option => option.name.toLowerCase().indexOf(this.query.toLowerCase()) !== -1)
+    }
 
     return {
       options,
+      loadOptions,
       value: options[0],
       valueMultiple: [options[0], options[3], options[6]],
+      valueAsync: [options[0], options[3], options[6]],
       alwaysOpen: false,
       filterable: true,
       checkboxesStyle: false,
@@ -212,6 +263,10 @@ export default {
 
 .col-span-4 {
   grid-column: span 4 / span 4;
+}
+
+.col-span-8 {
+  grid-column: span 8 / span 8;
 }
 
 // Pokemon icon

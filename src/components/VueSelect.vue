@@ -57,7 +57,11 @@
         </div>
 
         <!-- Right caret -->
-        <div class="mt-2 ml-2 dropdown-toggle"></div>
+        <div class="mt-2 ml-2 d-flex align-items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 16 16">
+            <path fill="none" stroke="#343a40" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 5l6 6 6-6"/>
+          </svg>
+        </div>
       </div>
     </div>
 
@@ -66,13 +70,21 @@
       <!-- Filter -->
       <template v-if="filterable">
         <div class="px-3 py-2">
-          <input
-            v-if="filterable"
-            type="search"
-            v-model="query"
-            @input="onInput"
-            class="form-control"
-            placeholder="Filter...">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filter" viewBox="0 0 16 16">
+                  <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+              </span>
+            </div>
+            <input
+              type="search"
+              v-model="query"
+              @input="filterInput"
+              class="form-control"
+              placeholder="Filter...">
+          </div>
         </div>
         <div class="dropdown-divider"></div>
       </template>
@@ -94,9 +106,16 @@
         <div class="dropdown-divider"></div>
       </template>
 
-      <!-- Options -->
+      <!-- Option list -->
       <div class="dropdown-items">
+        <!-- Spinner for async mode -->
+        <div v-if="optionsLoading" class="dropdown-item no-select">
+          Loading... <!-- TODO: real ass spinner -->
+        </div>
+
+        <!-- Options -->
         <div
+          v-else
           v-for="{ option, selected } in displayedOptionsWithSelected"
           :key="option[optionKey]"
           @click="toggleOption({ option, selected })"
@@ -137,6 +156,7 @@
 
 <script>
 import { clickOutMixin } from 'bootstrap-vue/src/mixins/click-out'
+import debounce from 'lodash-es/debounce'
 
 export default {
   name: 'vue-select',
@@ -155,15 +175,19 @@ export default {
     // List of options (non-async usage)
     options: {
       type: Array,
-      required: true,
-      default: []
+      required: false,
+      default: () => []
     },
     // Option key - should return a unique value when accessed on each option
     optionKey: {
       type: String,
       default: 'value'
     },
-    // Async function to load options (WIP)
+    // Async props
+    async: {
+      type: Boolean,
+      default: false
+    },
     loadOptions: {
       type: Function
     },
@@ -220,10 +244,11 @@ export default {
   data: function() {
     return {
       showDropdown: false,
-      query: '',
-      page: 1,
       internalOptions: this.options,
-      optionsLoading: false
+      optionsLoading: false,
+      dropdownInitialized: false,
+      query: '',
+      page: 1
     }
   },
   computed: {
@@ -246,7 +271,7 @@ export default {
     },
     // Filtered options
     filteredOptions: function() {
-      return this.filterable ?
+      return this.filterable && !this.async ?
         this.orderedOptions.filter(option => option[this.filterField].toLowerCase().indexOf(this.query.toLowerCase()) !== -1) :
         this.orderedOptions
     },
@@ -282,6 +307,15 @@ export default {
     toggleShowDropdown: function() {
       this.showDropdown = !this.showDropdown
       this.listenForClickOut = this.showDropdown
+
+      // Update dropdownInitialized
+      if (this.showDropdown && !this.dropdownInitialized) {
+        this.dropdownInitialized = true
+
+        if (this.async) {
+          this.updateOptions()
+        }
+      }
     },
     // Click out
     clickOutHandler: function() {
@@ -334,24 +368,24 @@ export default {
       this.$emit('input', options)
     },
     // Filter input
-    onInput: function(inputValue) {
-      /* TODO: debounce
-      if (this.debounce) {
-        clearTimeout(this.timeoutInstance)
-        this.timeoutInstance = setTimeout(this.research, this.debounce)
-      } else {
-        this.research()
-      }*/
-
-      //this.updateOptions(this.query)
+    filterInput: function() {
+      if (this.async) {
+        this.updateOptionsDebounced(this.query)
+      }
     },
     // Update options using loadOptions prop
-    async updateOptions(query) {
+    updateOptions: async function(query) {
       this.optionsLoading = true
       const options = await this.loadOptions(query)
+      console.log(options)
       this.optionsLoading = false
       this.internalOptions = options
-    }
+    },
+    updateOptionsDebounced: debounce(function(query) {
+      /*this.groups = []
+      this.groupsPage = 1*/
+      this.updateOptions(query)
+    }, 250) // TODO: debounce time param
   }
   // TODO: watch options prop to update internalOptions
 }
