@@ -97,15 +97,15 @@
       <!-- Options -->
       <div class="dropdown-items">
         <div
-          v-for="option in displayedOptions"
+          v-for="{ option, selected } in displayedOptionsWithSelected"
           :key="option[optionKey]"
-          @click="toggleOption(option)"
+          @click="toggleOption({ option, selected })"
           class="dropdown-item noselect"
-          :class="{ active: isSelected(option) && !checkboxesStyle }"
+          :class="{ active: selected && !checkboxesStyle }"
           >
           <template v-if="checkboxesStyle">
             <div class="custom-control custom-checkbox">
-              <input type="checkbox" class="custom-control-input" :checked="isSelected(option)">
+              <input type="checkbox" class="custom-control-input" :checked="selected">
               <label class="custom-control-label">
                 <slot name="option" :option="option">
                   {{ option.label }}
@@ -256,6 +256,15 @@ export default {
         this.filteredOptions :
         this.filteredOptions.slice(0, this.page * this.pageSize)
     },
+    // Options to display with selected boolean
+    displayedOptionsWithSelected: function() {
+      return this.displayedOptions.map(option => ({
+        option,
+        selected: this.single ?
+          this.value[this.optionKey] === option[this.optionKey] :
+          this.values.map(option => option[this.optionKey]).includes(option[this.optionKey])
+      }))
+    },
     // Check if all options/none are selected
     allSelected: function() {
       return this.values.length === this.filteredOptions.length
@@ -274,15 +283,13 @@ export default {
       this.showDropdown = !this.showDropdown
       this.listenForClickOut = this.showDropdown
     },
-    // Check if an option is selected
-    isSelected: function(option) {
-      return this.single ?
-        this.value === option :
-        this.values.includes(option)
+    // Click out
+    clickOutHandler: function() {
+      this.toggleShowDropdown()
     },
     // Toggle selected status of an option
-    toggleOption: function(option) {
-      if (this.isSelected(option)) {
+    toggleOption: function({ option, selected }) {
+      if (selected) {
         this.unselectOption(option)
       } else {
         this.selectOption(option)
