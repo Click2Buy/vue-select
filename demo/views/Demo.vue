@@ -1,8 +1,8 @@
 <template>
-  <div class="py-4">
-    <div class="grid grid-cols-10 gap-6">
+  <div class="pt-4" style="padding-bottom: 10rem;">
+    <div class="row">
       <!-- Props -->
-      <div class="col-span-2">
+      <div class="col-12 col-md-3">
         <h4>Properties</h4>
         <div class="form-group">
           <div class="form-check form-switch">
@@ -12,8 +12,8 @@
         </div>
         <div class="form-group">
           <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="filterable" v-model="filterable">
-            <label class="form-check-label" for="filterable">Filterable</label>
+            <input class="form-check-input" type="checkbox" id="searchable" v-model="searchable">
+            <label class="form-check-label" for="searchable">Searchable</label>
           </div>
         </div>
         <div class="form-group">
@@ -65,29 +65,30 @@
         </div>
       </div>
 
-      <!-- Single -->
-      <div class="col-span-4">
+      <div class="col-12 col-md-9">
+        <!-- Single -->
         <h4>Single</h4>
 
-        <div class="form-group">
-          <label>Favorite pokémon</label>
-          <!-- Actual component -->
-          <vue-select
-            v-model="value"
-            :options="options"
-            :always-open="alwaysOpen"
-            :multiple="false"
-            :filterable="filterable"
-            filter-field="name"
-            :checkboxes-style="checkboxesStyle"
-            :close-on-select="closeOnSelect"
-            :pagination="pagination"
-            :page-size="parseInt(pageSize)">
-            <template v-slot:option="{ option }">
-              <img :src="option.iconUrl" class="pokemon-icon">
-              {{ option.name }}
-            </template>
-          </vue-select>
+        <div class="form-group row">
+          <label class="col-12">Favorite pokémon</label>
+          <div class="col-12 col-md-6">
+            <vue-select
+              v-model="value"
+              :options="options"
+              :always-open="alwaysOpen"
+              :multiple="false"
+              :searchable="searchable"
+              search-field="name"
+              :checkboxes-style="checkboxesStyle"
+              :close-on-select="closeOnSelect"
+              :pagination="pagination"
+              :page-size="parseInt(pageSize)">
+              <template v-slot:option="{ option }">
+                <img :src="option.iconUrl" class="pokemon-icon">
+                {{ option.name }}
+              </template>
+            </vue-select>
+          </div>
         </div>
 
         <div class="form-group">
@@ -96,43 +97,44 @@
             <code>{{ JSON.stringify(value) }}</code>
           </div>
         </div>
-      </div>
 
-      <!-- Multiple -->
-      <div class="col-span-4">
+        <hr>
+
+        <!-- Multiple -->
         <h4>Multiple</h4>
 
-        <div class="form-group">
-          <label>Pokémon team</label>
-          <!-- Actual component -->
-          <vue-select
-            v-model="valueMultiple"
-            :options="options"
-            :always-open="alwaysOpen"
-            :multiple="true"
-            :filterable="filterable"
-            filter-field="name"
-            :checkboxes-style="checkboxesStyle"
-            :close-on-select="closeOnSelect"
-            :pagination="pagination"
-            :page-size="parseInt(pageSize)"
-            :displaySelectedOptionsFirst="displaySelectedOptionsFirst"
-            :select-all-option="selectAllOption"
-            :clear-button="clearButton"
-            :display-tags="displayTags">
-            <template v-slot:option="{ option }">
-              <img :src="option.iconUrl" class="pokemon-icon">
-              {{ option.name }}
-            </template>
-            <!--<template v-slot:placeholder="{ selectedOption }">
-              <template v-if="!selectedOption">
-                Select an option pliz
+        <div class="form-group row">
+          <label class="col-12">Pokémon team</label>
+          <div class="col-12 col-md-6">
+            <vue-select
+              v-model="valueMultiple"
+              :options="options"
+              :always-open="alwaysOpen"
+              :multiple="true"
+              :searchable="searchable"
+              search-field="name"
+              :checkboxes-style="checkboxesStyle"
+              :close-on-select="closeOnSelect"
+              :pagination="pagination"
+              :page-size="parseInt(pageSize)"
+              :displaySelectedOptionsFirst="displaySelectedOptionsFirst"
+              :select-all-option="selectAllOption"
+              :clear-button="clearButton"
+              :display-tags="displayTags">
+              <template v-slot:option="{ option }">
+                <img :src="option.iconUrl" class="pokemon-icon">
+                {{ option.name }}
               </template>
-              <template v-else>
-                Selected: {{ selectedOption.name }}
-              </template>
-            </template>-->
-          </vue-select>
+              <!--<template v-slot:placeholder="{ selectedOption }">
+                <template v-if="!selectedOption">
+                  Select an option pliz
+                </template>
+                <template v-else>
+                  Selected: {{ selectedOption.name }}
+                </template>
+              </template>-->
+            </vue-select>
+          </div>
         </div>
 
         <div class="form-group">
@@ -141,12 +143,55 @@
             <code>{{ JSON.stringify(valueMultiple) }}</code>
           </div>
         </div>
+
+        <hr>
+
+        <!-- Async -->
+        <h4>Async</h4>
+
+        <div class="form-group row">
+          <label class="col-12">Pokémon team</label>
+          <div class="col-12 col-md-6">
+            <vue-select
+              v-model="asyncValue"
+              :options="asyncOptions"
+              async
+              :options-loading="asyncOptionsLoading"
+              @search="loadOptionsDebounced"
+              :always-open="alwaysOpen"
+              :multiple="true"
+              :searchable="searchable"
+              search-field="name"
+              :checkboxes-style="checkboxesStyle"
+              :close-on-select="closeOnSelect"
+              :pagination="pagination"
+              :page-size="parseInt(pageSize)"
+              :displaySelectedOptionsFirst="displaySelectedOptionsFirst"
+              :select-all-option="selectAllOption"
+              :clear-button="clearButton"
+              :display-tags="displayTags">
+              <template v-slot:option="{ option }">
+                <img :src="option.iconUrl" class="pokemon-icon">
+                {{ option.name }}
+              </template>
+            </vue-select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <samp>v-model</samp>
+          <div>
+            <code>{{ JSON.stringify(asyncValue) }}</code>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import debounce from 'lodash-es/debounce'
+
 export default {
   name: 'Demo',
   data: function() {
@@ -162,15 +207,21 @@ export default {
       { value: 9, name: 'Blastoise', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/009.png' },
       { value: 10, name: 'Caterpie', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/010.png' },
       { value: 11, name: 'Metapod', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/011.png' },
-      { value: 12, name: 'Butterfree', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/012.png' }
+      { value: 12, name: 'Butterfree', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/012.png' },
+      { value: 13, name: 'Weedle', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/013.png' },
+      { value: 14, name: 'Kakuna', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/014.png' },
+      { value: 15, name: 'Beedrill', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/015.png' }
     ])
 
     return {
       options,
       value: options[0],
       valueMultiple: [options[0], options[3], options[6]],
+      asyncOptions: [],
+      asyncOptionsLoading: false,
+      asyncValue: [options[0], options[3], options[6]],
       alwaysOpen: false,
-      filterable: true,
+      searchable: true,
       checkboxesStyle: false,
       selectAllOption: true,
       closeOnSelect: false,
@@ -180,6 +231,17 @@ export default {
       pageSize: 10,
       displaySelectedOptionsFirst: false
     }
+  },
+  methods: {
+    loadOptions: async function(query) {
+      this.asyncOptionsLoading = true
+      await new Promise(r => setTimeout(r, 500))
+      this.asyncOptions = !query ? this.options : this.options.filter(option => option.name.toLowerCase().indexOf(query.toLowerCase()) !== -1)
+      this.asyncOptionsLoading = false
+    },
+    loadOptionsDebounced: debounce(function(query) {
+      this.loadOptions(query)
+    }, 250)
   }
 }
 </script>
@@ -194,24 +256,12 @@ export default {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.grid-cols-10 {
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-}
-
 .gap-6 {
   gap: 1.5rem;
 }
 
-.col-span-2 {
-  grid-column: span 2 / span 2;
-}
-
 .col-span-3 {
   grid-column: span 3 / span 3;
-}
-
-.col-span-4 {
-  grid-column: span 4 / span 4;
 }
 
 // Pokemon icon

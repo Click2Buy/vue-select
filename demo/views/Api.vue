@@ -41,7 +41,7 @@
             <td>Whether the component should allow to select multiple options</td>
           </tr>
           <tr>
-            <td><code>filterable</code></td>
+            <td><code>searchable</code></td>
             <td><code>Boolean</code></td>
             <td><code>true</code></td>
             <td>Display the search input to filter options</td>

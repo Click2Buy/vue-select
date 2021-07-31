@@ -1,9 +1,9 @@
 <template>
   <div class="vue-select position-relative">
-    <!-- Bordered element -->
+    <!-- Form control -->
     <div class="root-form-control form-control noselect" tabindex="0" @click="toggleShowDropdown">
       <div class="d-flex align-items-center justify-content-between flex-nowrap mt-n2 ml-n2">
-        <!-- Left content -->
+        <!-- Left: content -->
         <div class="flex-fill mt-2 ml-2 text-nowrap text-truncate">
           <!-- Single -->
           <template v-if="single">
@@ -18,6 +18,7 @@
               </template>
             </slot>
           </template>
+
           <!-- Multiple -->
           <template v-else>
             <template v-if="!displayTags">
@@ -56,23 +57,35 @@
           </template>
         </div>
 
-        <!-- Right caret -->
-        <div class="mt-2 ml-2 dropdown-toggle"></div>
+        <!-- Right: caret down -->
+        <div class="mt-2 ml-2 d-flex align-items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 16 16">
+            <path fill="none" stroke="#343a40" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 5l6 6 6-6"/>
+          </svg>
+        </div>
       </div>
     </div>
 
     <!-- Dropdown -->
     <div class="dropdown-menu show w-100" v-show="showDropdown || alwaysOpen">
-      <!-- Filter -->
-      <template v-if="filterable">
+      <!-- Search -->
+      <template v-if="searchable">
         <div class="px-3 py-2">
-          <input
-            v-if="filterable"
-            type="search"
-            v-model="query"
-            @input="onInput"
-            class="form-control"
-            placeholder="Filter...">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+              </span>
+            </div>
+            <input
+              type="search"
+              v-model="query"
+              @input="searchInput"
+              class="form-control"
+              placeholder="Search...">
+          </div>
         </div>
         <div class="dropdown-divider"></div>
       </template>
@@ -94,9 +107,16 @@
         <div class="dropdown-divider"></div>
       </template>
 
-      <!-- Options -->
+      <!-- Option list -->
       <div class="dropdown-items">
+        <!-- Spinner for async mode -->
+        <div v-if="optionsLoading" class="dropdown-item no-select">
+          Loading... <!-- TODO: real ass spinner -->
+        </div>
+
+        <!-- Options -->
         <div
+          v-else
           v-for="{ option, selected } in displayedOptionsWithSelected"
           :key="option[optionKey]"
           @click="toggleOption({ option, selected })"
@@ -155,17 +175,22 @@ export default {
     // List of options (non-async usage)
     options: {
       type: Array,
-      required: true,
-      default: []
+      required: false,
+      default: () => []
     },
     // Option key - should return a unique value when accessed on each option
     optionKey: {
       type: String,
       default: 'value'
     },
-    // Async function to load options (WIP)
-    loadOptions: {
-      type: Function
+    // Async props
+    async: {
+      type: Boolean,
+      default: false
+    },
+    optionsLoading: {
+      type: Boolean,
+      default: false
     },
     // Features
     alwaysOpen: {
@@ -184,11 +209,11 @@ export default {
       type: Number,
       default: 20
     },
-    filterable: {
+    searchable: {
       type: Boolean,
       default: false
     },
-    filterField: {
+    searchField: {
       type: String,
       default: 'label'
     },
@@ -220,10 +245,9 @@ export default {
   data: function() {
     return {
       showDropdown: false,
+      dropdownInitialized: false,
       query: '',
-      page: 1,
-      internalOptions: this.options,
-      optionsLoading: false
+      page: 1
     }
   },
   computed: {
@@ -237,17 +261,17 @@ export default {
     // Ordered options (put selected options first if prop)
     orderedOptions: function() {
       if (this.single || !this.displaySelectedOptionsFirst) {
-        return this.internalOptions
+        return this.options
       } else {
         // Put selected options first
-        const remainingOptions = this.internalOptions.filter(option => !this.values.map(option => option[this.optionKey]).includes(option[this.optionKey]))
+        const remainingOptions = this.options.filter(option => !this.values.map(option => option[this.optionKey]).includes(option[this.optionKey]))
         return this.values.concat(remainingOptions)
       }
     },
     // Filtered options
     filteredOptions: function() {
-      return this.filterable ?
-        this.orderedOptions.filter(option => option[this.filterField].toLowerCase().indexOf(this.query.toLowerCase()) !== -1) :
+      return this.searchable && !this.async ?
+        this.orderedOptions.filter(option => option[this.searchField].toLowerCase().indexOf(this.query.toLowerCase()) !== -1) :
         this.orderedOptions
     },
     // Options to display (ordered + filtered + paginated)
@@ -282,6 +306,14 @@ export default {
     toggleShowDropdown: function() {
       this.showDropdown = !this.showDropdown
       this.listenForClickOut = this.showDropdown
+
+      // Update dropdownInitialized
+      if (this.showDropdown && !this.dropdownInitialized) {
+        this.dropdownInitialized = true
+
+        // Trigger event with empty query
+        this.searchInput()
+      }
     },
     // Click out
     clickOutHandler: function() {
@@ -334,26 +366,12 @@ export default {
       this.$emit('input', options)
     },
     // Filter input
-    onInput: function(inputValue) {
-      /* TODO: debounce
-      if (this.debounce) {
-        clearTimeout(this.timeoutInstance)
-        this.timeoutInstance = setTimeout(this.research, this.debounce)
-      } else {
-        this.research()
-      }*/
-
-      //this.updateOptions(this.query)
-    },
-    // Update options using loadOptions prop
-    async updateOptions(query) {
-      this.optionsLoading = true
-      const options = await this.loadOptions(query)
-      this.optionsLoading = false
-      this.internalOptions = options
+    searchInput: function() {
+      if (this.async) {
+        this.$emit('search', this.query) // TODO: docs
+      }
     }
   }
-  // TODO: watch options prop to update internalOptions
 }
 </script>
 
