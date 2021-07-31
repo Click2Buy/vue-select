@@ -90,6 +90,15 @@
           </tr>
           <tr>
             <td>
+              <code>clear-button</code>
+              <div><span class="badge badge-secondary">multiple only</span></div>
+            </td>
+            <td><code>Boolean</code></td>
+            <td><code>false</code></td>
+            <td>Enable button to clear selection</td>
+          </tr>
+          <tr>
+            <td>
               <code>display-tags</code>
               <div><span class="badge badge-secondary">multiple only</span></div>
             </td>

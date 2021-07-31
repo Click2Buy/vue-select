@@ -4,16 +4,16 @@
     <div class="root-form-control form-control noselect" tabindex="0" @click="toggleShowDropdown">
       <div class="d-flex align-items-center justify-content-between flex-nowrap mt-n2 ml-n2">
         <!-- Left content -->
-        <div class="mt-2 ml-2 text-nowrap text-truncate">
+        <div class="flex-fill mt-2 ml-2 text-nowrap text-truncate">
           <!-- Single -->
           <template v-if="single">
-            <slot name="placeholder" :selected-option="selectedOption">
+            <slot name="placeholder" :selected-option="value">
               <template v-if="value === null">
                 Select a value...
               </template>
               <template v-else>
-                <slot name="option" :option="optionsMap.get(value)">
-                  {{ selectedOption.label }}
+                <slot name="option" :option="value">
+                  {{ value.label }}
                 </slot>
               </template>
             </slot>
@@ -21,24 +21,33 @@
           <!-- Multiple -->
           <template v-else>
             <template v-if="!displayTags">
-              {{ values.length }} option(s) selected
+              <slot name="values" :values="values" :reset="unselectAll">
+                <div class="d-flex align-items-center justify-content-between mt-n2 ml-n2">
+                  <div class="text-nowrap text-truncate mt-2 ml-2">
+                    {{ values.length }} option(s) selected
+                  </div>
+                  <a href="#" class="text-secondary mt-2 ml-2" @click.prevent="unselectAll" v-if="clearButton && values.length > 0">
+                    <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="times-circle" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="svg-inline--fa fa-times-circle fa-w-16"><path fill="currentColor" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm121.6 313.1c4.7 4.7 4.7 12.3 0 17L338 377.6c-4.7 4.7-12.3 4.7-17 0L256 312l-65.1 65.6c-4.7 4.7-12.3 4.7-17 0L134.4 338c-4.7-4.7-4.7-12.3 0-17l65.6-65-65.6-65.1c-4.7-4.7-4.7-12.3 0-17l39.6-39.6c4.7-4.7 12.3-4.7 17 0l65 65.7 65.1-65.6c4.7-4.7 12.3-4.7 17 0l39.6 39.6c4.7 4.7 4.7 12.3 0 17L312 256l65.6 65.1z" class=""></path></svg>
+                  </a>
+                </div>
+              </slot>
             </template>
             <template v-else>
-              <template v-if="selectedOptions.length === 0">
+              <template v-if="values.length === 0">
                 No option selected
               </template>
               <div v-else class="d-flex flex-wrap mt-n1 ml-n1">
                 <div
                   class="btn-group mt-1 ml-1"
-                  v-for="option in selectedOptions"
-                  :key="option.value"
+                  v-for="option in values"
+                  :key="option[optionKey]"
                   @click.prevent>
                   <div class="btn btn-xs btn-primary">
                     <slot name="option" :option="option">
                       {{ option.label }}
                     </slot>
                   </div>
-                  <div class="btn btn-xs btn-primary" @click.stop="unselectValue(option.value)">
+                  <div class="btn btn-xs btn-primary" @click.stop="unselectOption(option)">
                     &times;
                   </div>
                 </div>
@@ -61,6 +70,7 @@
             v-if="filterable"
             type="search"
             v-model="query"
+            @input="onInput"
             class="form-control"
             placeholder="Filter...">
         </div>
@@ -88,14 +98,14 @@
       <div class="dropdown-items">
         <div
           v-for="option in displayedOptions"
-          :key="option.value"
-          @click="toggleValue(option.value)"
+          :key="option[optionKey]"
+          @click="toggleOption(option)"
           class="dropdown-item noselect"
-          :class="{ active: isSelected(option.value) && !checkboxesStyle }"
+          :class="{ active: isSelected(option) && !checkboxesStyle }"
           >
           <template v-if="checkboxesStyle">
             <div class="custom-control custom-checkbox">
-              <input type="checkbox" class="custom-control-input" :checked="isSelected(option.value)">
+              <input type="checkbox" class="custom-control-input" :checked="isSelected(option)">
               <label class="custom-control-label">
                 <slot name="option" :option="option">
                   {{ option.label }}
@@ -109,6 +119,7 @@
             </slot>
           </template>
         </div>
+
         <!-- Text after options -->
         <div
           v-if="pagination && filteredOptions.length > page * pageSize"
@@ -125,7 +136,7 @@
 </template>
 
 <script>
-import clickOutMixin from 'bootstrap-vue/src/mixins/click-out'
+import { clickOutMixin } from 'bootstrap-vue/src/mixins/click-out'
 
 export default {
   name: 'vue-select',
@@ -137,13 +148,26 @@ export default {
     }
   },
   props: {
+    // v-model
     value: {
       required: true
     },
+    // List of options (non-async usage)
     options: {
       type: Array,
-      required: true
+      required: true,
+      default: []
     },
+    // Option key - should return a unique value when accessed on each option
+    optionKey: {
+      type: String,
+      default: 'value'
+    },
+    // Async function to load options (WIP)
+    loadOptions: {
+      type: Function
+    },
+    // Features
     alwaysOpen: {
       type: Boolean,
       default: false
@@ -184,6 +208,10 @@ export default {
       type: Boolean,
       default: false
     },
+    clearButton: {
+      type: Boolean,
+      default: false
+    },
     displayTags: {
       type: Boolean,
       default: false
@@ -193,11 +221,13 @@ export default {
     return {
       showDropdown: false,
       query: '',
-      page: 1
+      page: 1,
+      internalOptions: this.options,
+      optionsLoading: false
     }
   },
   computed: {
-    // Keeping the syntax clean
+    // Aliases to keep the syntax clean
     values: function() {
       return this.value
     },
@@ -206,11 +236,12 @@ export default {
     },
     // Ordered options (put selected options first if prop)
     orderedOptions: function() {
-      if (!this.multiple || !this.displaySelectedOptionsFirst) {
-        return this.options
+      if (this.single || !this.displaySelectedOptionsFirst) {
+        return this.internalOptions
       } else {
         // Put selected options first
-        return this.selectedOptions.concat(this.options.filter(option => !this.values.includes(option.value)))
+        const remainingOptions = this.internalOptions.filter(option => !this.values.map(option => option[this.optionKey]).includes(option[this.optionKey]))
+        return this.values.concat(remainingOptions)
       }
     },
     // Filtered options
@@ -219,7 +250,7 @@ export default {
         this.orderedOptions.filter(option => option[this.filterField].toLowerCase().indexOf(this.query.toLowerCase()) !== -1) :
         this.orderedOptions
     },
-    // Options to display (ordered + filtered + limited)
+    // Options to display (ordered + filtered + paginated)
     displayedOptions: function() {
       return !this.pagination ?
         this.filteredOptions :
@@ -232,23 +263,6 @@ export default {
     noneSelected: function() {
       return this.values.length === 0
     },
-    // Map to get option from value
-    optionsMap: function() {
-      const optionsMap = new Map()
-
-      this.options.forEach(option => {
-        optionsMap.set(option.value, option)
-      })
-
-      return optionsMap
-    },
-    // Selected options from values
-    selectedOption: function() {
-      return this.single ? this.optionsMap.get(this.value) : null
-    },
-    selectedOptions: function() {
-      return this.multiple ? this.values.map(value => this.optionsMap.get(value)) : null
-    },
     // Next page size
     nextPageSize: function() {
       return Math.min(this.filteredOptions.length - this.page * this.pageSize, this.pageSize)
@@ -260,48 +274,42 @@ export default {
       this.showDropdown = !this.showDropdown
       this.listenForClickOut = this.showDropdown
     },
-    // Click out
-    clickOutHandler(evt) {
-      this.toggleShowDropdown()
-    },
     // Check if an option is selected
-    isSelected: function(value) {
+    isSelected: function(option) {
       return this.single ?
-        this.value === value :
-        this.values.includes(value)
+        this.value === option :
+        this.values.includes(option)
     },
     // Toggle selected status of an option
-    toggleValue: function(value) {
-      if (this.isSelected(value)) {
-        this.unselectValue(value)
+    toggleOption: function(option) {
+      if (this.isSelected(option)) {
+        this.unselectOption(option)
       } else {
-        this.selectValue(value)
+        this.selectOption(option)
         if (this.closeOnSelect) {
           this.toggleShowDropdown()
         }
       }
     },
     // Select an option
-    selectValue: function(value) {
+    selectOption: function(option) {
       if (this.single) {
-        this.$emit('input', value)
+        this.$emit('input', option)
       } else {
-        const values = [...this.values]
-        values.push(value)
-        this.$emit('input', values)
+        this.$emit('input', this.values.concat(option))
       }
     },
     // Unselect an option
-    unselectValue: function(value) {
+    unselectOption: function(option) {
       if (this.single) {
         this.$emit('input', null)
       } else {
-        const values = [...this.values]
-        const index = this.values.indexOf(value)
+        const index = this.values.map(option => option[this.optionKey]).indexOf(option[this.optionKey])
         if (index !== -1) {
-          values.splice(index, 1)
+          let options = this.values.slice()
+          options.splice(index, 1)
+          this.$emit('input', options)
         }
-        this.$emit('input', values)
       }
     },
     // Click on "select all" option
@@ -310,17 +318,35 @@ export default {
     },
     // Select all options
     selectAll: function() {
-      const newValues = this.filteredOptions
-        .filter(option => !this.values.includes(option.value))
-        .map(option => option.value)
-      this.$emit('input', this.values.concat(newValues))
+      const newOptions = this.filteredOptions.filter(option => !this.values.includes(option))
+      this.$emit('input', this.values.concat(newOptions))
     },
     // Unselect all options
     unselectAll: function() {
-      const filteredValues = this.filteredOptions.map(option => option.value)
-      this.$emit('input', this.values.filter(value => !filteredValues.includes(value)))
+      const options = this.values.filter(option => !this.filteredOptions.includes(option))
+      this.$emit('input', options)
+    },
+    // Filter input
+    onInput: function(inputValue) {
+      /* TODO: debounce
+      if (this.debounce) {
+        clearTimeout(this.timeoutInstance)
+        this.timeoutInstance = setTimeout(this.research, this.debounce)
+      } else {
+        this.research()
+      }*/
+
+      //this.updateOptions(this.query)
+    },
+    // Update options using loadOptions prop
+    async updateOptions(query) {
+      this.optionsLoading = true
+      const options = await this.loadOptions(query)
+      this.optionsLoading = false
+      this.internalOptions = options
     }
   }
+  // TODO: watch options prop to update internalOptions
 }
 </script>
 

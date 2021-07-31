@@ -53,6 +53,12 @@
         </div>
         <div class="form-group">
           <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="clearButton" v-model="clearButton">
+            <label class="form-check-label" for="clearButton">Clear button</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="displayTags" v-model="displayTags">
             <label class="form-check-label" for="displayTags">Display tags</label>
           </div>
@@ -62,12 +68,7 @@
       <!-- Single -->
       <div class="col-span-4">
         <h4>Single</h4>
-        <div class="form-group">
-          <samp>v-model</samp>
-          <div>
-            <code>{{ JSON.stringify(value) }}</code>
-          </div>
-        </div>
+
         <div class="form-group">
           <label>Favorite pokémon</label>
           <!-- Actual component -->
@@ -88,17 +89,19 @@
             </template>
           </vue-select>
         </div>
+
+        <div class="form-group">
+          <samp>v-model</samp>
+          <div>
+            <code>{{ JSON.stringify(value) }}</code>
+          </div>
+        </div>
       </div>
 
       <!-- Multiple -->
       <div class="col-span-4">
         <h4>Multiple</h4>
-        <div class="form-group">
-          <samp>v-model</samp>
-          <div>
-            <code>{{ JSON.stringify(valueMultiple) }}</code>
-          </div>
-        </div>
+
         <div class="form-group">
           <label>Pokémon team</label>
           <!-- Actual component -->
@@ -115,6 +118,7 @@
             :page-size="parseInt(pageSize)"
             :displaySelectedOptionsFirst="displaySelectedOptionsFirst"
             :select-all-option="selectAllOption"
+            :clear-button="clearButton"
             :display-tags="displayTags">
             <template v-slot:option="{ option }">
               <img :src="option.iconUrl" class="pokemon-icon">
@@ -130,6 +134,13 @@
             </template>-->
           </vue-select>
         </div>
+
+        <div class="form-group">
+          <samp>v-model</samp>
+          <div>
+            <code>{{ JSON.stringify(valueMultiple) }}</code>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -139,28 +150,31 @@
 export default {
   name: 'Demo',
   data: function() {
+    const options = Object.freeze([
+      { value: 1, name: 'Bulbasaur', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/001.png' },
+      { value: 2, name: 'Ivysaur', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/002.png' },
+      { value: 3, name: 'Venusaur', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/003.png' },
+      { value: 4, name: 'Charmander', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/004.png' },
+      { value: 5, name: 'Charmeleon', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/005.png' },
+      { value: 6, name: 'Charizard', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/006.png' },
+      { value: 7, name: 'Squirtle', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/007.png' },
+      { value: 8, name: 'Wartortle', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/008.png' },
+      { value: 9, name: 'Blastoise', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/009.png' },
+      { value: 10, name: 'Caterpie', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/010.png' },
+      { value: 11, name: 'Metapod', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/011.png' },
+      { value: 12, name: 'Butterfree', iconUrl: 'https://www.serebii.net/pokedex-xy/icon/012.png' }
+    ])
+
     return {
-      options: Object.freeze([
-        { value: 1, name: 'Bulbasaur', iconUrl: 'https://cdn.bulbagarden.net/upload/e/ec/001MS.png' },
-        { value: 2, name: 'Ivysaur', iconUrl: 'https://cdn.bulbagarden.net/upload/6/6b/002MS.png' },
-        { value: 3, name: 'Venusaur', iconUrl: 'https://cdn.bulbagarden.net/upload/e/e5/003XYMS.png' },
-        { value: 4, name: 'Charmander', iconUrl: 'https://cdn.bulbagarden.net/upload/b/bb/004MS.png' },
-        { value: 5, name: 'Charmeleon', iconUrl: 'https://cdn.bulbagarden.net/upload/d/dc/005MS.png' },
-        { value: 6, name: 'Charizard', iconUrl: 'https://cdn.bulbagarden.net/upload/6/62/006XYMS.png' },
-        { value: 7, name: 'Squirtle', iconUrl: 'https://cdn.bulbagarden.net/upload/9/92/007MS.png' },
-        { value: 8, name: 'Wartortle', iconUrl: 'https://cdn.bulbagarden.net/upload/f/f3/008MS.png' },
-        { value: 9, name: 'Blastoise', iconUrl: 'https://cdn.bulbagarden.net/upload/5/59/009XYMS.png' },
-        { value: 10, name: 'Caterpie', iconUrl: 'https://cdn.bulbagarden.net/upload/6/69/010MS.png' },
-        { value: 11, name: 'Metapod', iconUrl: 'https://cdn.bulbagarden.net/upload/c/ce/011MS.png' },
-        { value: 12, name: 'Butterfree', iconUrl: 'https://cdn.bulbagarden.net/upload/1/14/012MS.png' }
-      ]),
-      value: 11,
-      valueMultiple: [1, 4, 7],
+      options,
+      value: options[0],
+      valueMultiple: [options[0], options[3], options[6]],
       alwaysOpen: false,
       filterable: true,
       checkboxesStyle: false,
       selectAllOption: true,
       closeOnSelect: false,
+      clearButton: false,
       displayTags: false,
       pagination: false,
       pageSize: 10,
