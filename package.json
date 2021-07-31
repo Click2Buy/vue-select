@@ -23,7 +23,7 @@
   "main": "dist/vue-select.umd.js",
   "dependencies": {
     "core-js": "^3.6.4",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "vue": "^2.6.11"
   },
   "devDependencies": {
