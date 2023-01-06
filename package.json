@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.3.0",
-    "@vue/cli-service": "~4.3.0",
+    "@vue/cli-service": "~5.0.8",
     "bootstrap": "^4.6.0",
     "bootstrap-vue": "^2.21.2",
     "sass": "^1.26.3",
